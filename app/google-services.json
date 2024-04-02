@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "500576295009",
+    "project_id": "word-guessing-game-c6c9d",
+    "storage_bucket": "word-guessing-game-c6c9d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:500576295009:android:0b12c113050eae170d3220",
+        "android_client_info": {
+          "package_name": "edu.gvsu.cis.camerafuntime"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-c_Ib5twjFHXSAwa2vIZGW_2VFwKLHmw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

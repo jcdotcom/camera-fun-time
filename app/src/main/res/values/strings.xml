@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Camera Fun Time</string>
+    <string name="btn_desc_settings">Application settings</string>
+    <string name="btn_desc_gallery">View images</string>
+    <string name="btn_desc_capture">Capture image</string>
+    <string name="btn_desc_flip">Switch camera</string>
+    <string name="btn_desc_back">Go back</string>
+</resources>
