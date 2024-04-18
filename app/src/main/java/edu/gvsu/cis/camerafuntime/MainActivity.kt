@@ -8,7 +8,6 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -30,6 +29,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 typealias LumaListener = (luma: Double) -> Unit
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
@@ -40,8 +40,6 @@ class MainActivity : AppCompatActivity() {
     private var imageCapture: ImageCapture? = null
     private var imageAnalyzer: ImageAnalysis? = null
     private var lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA
-
-    //private var img: ImageView = findViewById(R.id.imageView4)
 
     private val permissionLauncher =
         registerForActivityResult(
@@ -94,10 +92,7 @@ class MainActivity : AppCompatActivity() {
 
     // --- [ Click Listeners ] --- //
 
-        binding.captureBtn.setOnClickListener {
-            takePhoto()
-            // shutterImage(img)
-        }
+        binding.captureBtn.setOnClickListener { takePhoto() }
         binding.flipBtn.setOnClickListener {
             flipCamera()
         }
@@ -220,14 +215,6 @@ class MainActivity : AppCompatActivity() {
             }
         )
     }
-
-    /* private fun shutterImage(img: ImageView) {
-        Thread {
-            img.setImageResource(R.mipmap.white_background)
-            Thread.sleep(200)
-            img.setImageResource(R.mipmap.transparent)
-        }.start()
-    } */
 
     companion object {
         private const val REQUEST_CODE_SETTINGS = 1
