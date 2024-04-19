@@ -8,6 +8,8 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -22,11 +24,17 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.snackbar.Snackbar
 import edu.gvsu.cis.camerafuntime.databinding.ActivityMainBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+
 
 typealias LumaListener = (luma: Double) -> Unit
 
@@ -40,6 +48,8 @@ class MainActivity : AppCompatActivity() {
     private var imageCapture: ImageCapture? = null
     private var imageAnalyzer: ImageAnalysis? = null
     private var lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA
+
+    private lateinit var img: ImageView
 
     private val permissionLauncher =
         registerForActivityResult(
@@ -92,7 +102,10 @@ class MainActivity : AppCompatActivity() {
 
     // --- [ Click Listeners ] --- //
 
-        binding.captureBtn.setOnClickListener { takePhoto() }
+        binding.captureBtn.setOnClickListener {
+            takePhoto()
+            shutterImage()
+        }
         binding.flipBtn.setOnClickListener {
             flipCamera()
         }
@@ -127,6 +140,9 @@ class MainActivity : AppCompatActivity() {
                 Log.e(TAG, "Use case binding failed", exc)
             }
         }, ContextCompat.getMainExecutor(this))
+
+        img = findViewById(R.id.imageView2)
+
     }
 /*
     override fun onStart(){
@@ -153,6 +169,9 @@ class MainActivity : AppCompatActivity() {
         else if (lensFacing == CameraSelector.DEFAULT_BACK_CAMERA){ lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA }
         startCamera()
     }
+
+    private var height: Int = 0
+    private var width: Int = 0
 
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
@@ -214,6 +233,20 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         )
+    }
+
+    private fun shutterImage() {
+        CoroutineScope(Dispatchers.IO).launch {
+            withContext(Dispatchers.Main) {
+                img.setImageResource(R.mipmap.white)
+                /* var params: LinearLayout.LayoutParams = LinearLayout.LayoutParams(width, height)
+                img.layoutParams = params */
+            }
+            delay(150)
+            withContext(Dispatchers.Main) {
+                img.setImageResource(R.mipmap.transparent)
+            }
+        }
     }
 
     companion object {
