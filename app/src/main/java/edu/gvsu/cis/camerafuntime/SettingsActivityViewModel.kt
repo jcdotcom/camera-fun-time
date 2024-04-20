@@ -21,10 +21,8 @@ import java.util.concurrent.Executors
 
 class SettingsActivityViewModel : ViewModel() {
 
-    //init {
-    //    initWord()
-    //}
+    private var savePath = MutableLiveData<String>()
 
-
-
-    }
+    fun setSavePath(newPath: String){ savePath.value = newPath }
+    fun getSavePath(): String{ return savePath.value!! }
+}

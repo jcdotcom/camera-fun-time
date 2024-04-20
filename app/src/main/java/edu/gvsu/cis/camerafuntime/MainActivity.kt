@@ -1,6 +1,7 @@
 package edu.gvsu.cis.camerafuntime
 
 import android.Manifest
+import android.animation.ValueAnimator
 import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -9,7 +10,6 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -17,26 +17,16 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.snackbar.Snackbar
 import edu.gvsu.cis.camerafuntime.databinding.ActivityMainBinding
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-
-
-typealias LumaListener = (luma: Double) -> Unit
 
 class MainActivity : AppCompatActivity() {
 
@@ -73,18 +63,12 @@ class MainActivity : AppCompatActivity() {
     val settingsLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             if (it.resultCode == RESULT_OK) {
-                //val lengths = it.data?.getStringExtra("snack")
-                //val minLength = it.data?.getIntExtra("minLength", 0)
-                //val maxLength = it.data?.getIntExtra("maxLength", 0)
+                viewModel.setSavePath(it.data?.getStringExtra("savePath"))
                 Snackbar.make(
                     binding.root,
                     "Settings Saved!",
                     Snackbar.LENGTH_LONG
                 ).show()
-                //viewModel.setMinimumLength(minLength)
-                //viewModel.setMaximumLength(maxLength)
-                //viewModel.getNewWord()
-                //binding.scrambleWord.text = viewModel.getCurrScrambleWord()
             }
         }
 
@@ -103,20 +87,21 @@ class MainActivity : AppCompatActivity() {
     // --- [ Click Listeners ] --- //
 
         binding.captureBtn.setOnClickListener {
-            takePhoto()
             shutterImage()
+            takePhoto()
         }
         binding.flipBtn.setOnClickListener {
             flipCamera()
         }
         binding.galleryBtn.setOnClickListener {
-            val intent = Intent(this, GalleryActivity::class.java)
-            startActivity(intent)
+            val toGallery = Intent(this, GalleryActivity::class.java)
+            toGallery.putExtra("savePath", viewModel.getSavePath())
+            startActivity(toGallery)
         }
         binding.settingsBtn.setOnClickListener {
-            //val toPreferences = Intent(this, PreferencesActivity::class.java)
-            //toPreferences.putExtra("currentMinLength", currentMinLength)
-            settingsLauncher.launch(Intent(this, SettingsActivity::class.java))
+            val toSettings = Intent(this, SettingsActivity::class.java)
+            toSettings.putExtra("savePath", viewModel.getSavePath())
+            settingsLauncher.launch(toSettings)
         }
 
     // --- [ Camera Executor ] --- //
@@ -130,7 +115,6 @@ class MainActivity : AppCompatActivity() {
                 .also {
                     it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
                 }
-            //val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
             try {
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(
@@ -140,16 +124,8 @@ class MainActivity : AppCompatActivity() {
                 Log.e(TAG, "Use case binding failed", exc)
             }
         }, ContextCompat.getMainExecutor(this))
-
-        img = findViewById(R.id.imageView2)
-
     }
-/*
-    override fun onStart(){
-        super.onStart()
 
-    }
-*/
     override fun onDestroy() {
         super.onDestroy()
         cameraExecutor.shutdown()
@@ -170,9 +146,6 @@ class MainActivity : AppCompatActivity() {
         startCamera()
     }
 
-    private var height: Int = 0
-    private var width: Int = 0
-
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         cameraProviderFuture.addListener({
@@ -183,19 +156,10 @@ class MainActivity : AppCompatActivity() {
                     it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
                 }
             imageCapture = ImageCapture.Builder().build()
-            imageAnalyzer = ImageAnalysis.Builder()
-                .build()
-                .also {
-                    it.setAnalyzer(cameraExecutor, LuminosityAnalyzer { luma ->
-                        //TODO - luminosity analyzer (only TODO'd so its highlighted)
-                        //Log.d("DEBUG", "Average luminosity: $luma")
-                    })
-                }
-            //val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
             try {
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(
-                    this, lensFacing, preview, imageCapture, imageAnalyzer)
+                    this, lensFacing, preview, imageCapture)
             } catch(exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
@@ -210,7 +174,7 @@ class MainActivity : AppCompatActivity() {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)
             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
             if(Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraFunTime")
+                put(MediaStore.Images.Media.RELATIVE_PATH, viewModel.getSavePath())
             }
         }
         val outputOptions = ImageCapture.OutputFileOptions
@@ -236,17 +200,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun shutterImage() {
-        CoroutineScope(Dispatchers.IO).launch {
-            withContext(Dispatchers.Main) {
-                img.setImageResource(R.mipmap.white)
-                /* var params: LinearLayout.LayoutParams = LinearLayout.LayoutParams(width, height)
-                img.layoutParams = params */
-            }
-            delay(150)
-            withContext(Dispatchers.Main) {
-                img.setImageResource(R.mipmap.transparent)
-            }
+        binding.shutterView.setImageResource(R.mipmap.white)
+        val fadeOutAnimator = ValueAnimator.ofFloat(1f, 0f)
+        fadeOutAnimator.duration = 500
+        fadeOutAnimator.addUpdateListener { animation ->
+            val alpha = animation.animatedValue as Float
+            binding.shutterView.alpha = alpha
         }
+        fadeOutAnimator.start()
     }
 
     companion object {
@@ -262,28 +223,6 @@ class MainActivity : AppCompatActivity() {
                     add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 }
             }.toTypedArray()
-    }
-
-    private class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer {
-
-        private fun ByteBuffer.toByteArray(): ByteArray {
-            rewind()    // Rewind the buffer to zero
-            val data = ByteArray(remaining())
-            get(data)   // Copy the buffer into a byte array
-            return data // Return the byte array
-        }
-
-        override fun analyze(image: ImageProxy) {
-
-            val buffer = image.planes[0].buffer
-            val data = buffer.toByteArray()
-            val pixels = data.map { it.toInt() and 0xFF }
-            val luma = pixels.average()
-
-            listener(luma)
-
-            image.close()
-        }
     }
 }
 

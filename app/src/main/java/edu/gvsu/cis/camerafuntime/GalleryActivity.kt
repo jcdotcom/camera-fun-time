@@ -15,11 +15,14 @@ import kotlinx.coroutines.launch
 import java.io.File
 import android.graphics.BitmapFactory
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.os.Environment
 import android.util.Log
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
+import com.google.android.material.snackbar.Snackbar
+import java.net.URI
 
 class GalleryActivity : AppCompatActivity() {
 
@@ -30,6 +33,7 @@ class GalleryActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         viewModel = ViewModelProvider(this)[GalleryActivityViewModel::class.java]
         binding = ActivityGalleryBinding.inflate(layoutInflater)
+        viewModel.setSavePath(intent.getStringExtra("savePath"))
         galleryRecycler = binding.galleryRecycler
         setContentView(binding.root)
 
@@ -45,7 +49,13 @@ class GalleryActivity : AppCompatActivity() {
         val scope = CoroutineScope(Dispatchers.Main)
         scope.launch {
             val imageList = mutableListOf<Bitmap>()
-            val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "CameraFunTime")
+            val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), intent.getStringExtra("savePath"))
+
+            if(directory.listFiles().isNullOrEmpty()){
+                Snackbar.make(binding.root, "No images found at $directory", Snackbar.LENGTH_SHORT).show()
+            }
+
+            Log.d("GalleryActivity", directory.toString())
             directory.listFiles()?.filter { it.isFile && it.extension == "jpg" }?.forEach {
                 Glide.with(this@GalleryActivity)
                     .asBitmap()

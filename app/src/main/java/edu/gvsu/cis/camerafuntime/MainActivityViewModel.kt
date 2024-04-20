@@ -21,10 +21,8 @@ import java.util.concurrent.Executors
 
 class MainActivityViewModel : ViewModel() {
 
-    //init {
-    //    initWord()
-    //}
+    private var savePath: String? = "CameraFunTime"
 
-
-
-    }
+    fun setSavePath(newPath: String?){ savePath = newPath }
+    fun getSavePath(): String?{ return savePath }
+}

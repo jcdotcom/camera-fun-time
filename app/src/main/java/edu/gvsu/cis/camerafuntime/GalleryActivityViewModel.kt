@@ -1,6 +1,7 @@
 package edu.gvsu.cis.camerafuntime
 
 import android.media.Image
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -23,9 +24,13 @@ import java.util.concurrent.Executors
 
 class GalleryActivityViewModel : ViewModel() {
 
-    //init {
-    //    initWord()
-    //}
+    private val savePath = MutableLiveData<String>()
 
-
+    fun setSavePath(path: String?) {
+        savePath.value = path
     }
+
+    fun getSavePath(): String? {
+        return savePath.value
+    }
+}
